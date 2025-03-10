@@ -119,3 +119,41 @@ try:
     print("Received:", received_message)
 except Exception as e:
     print(f"Error: {e}")
+
+
+# Zadanie 5
+
+import socket
+import random
+
+def send_receive_message(host, port, message):
+
+  try:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+      s.connect((host, port))
+      while True:
+        message = input("Enter a message to send (or 'exit' to quit): ")
+        if message.lower() == 'exit':
+          break
+        s.sendall(message.encode())
+        data = s.recv(1024)
+        print(data.decode())
+
+  except ConnectionRefusedError:
+    print(f"Connection refused to {host}:{port}")
+    return None
+  except Exception as e:
+    print(f"An error occurred: {e}")
+    return None
+
+if __name__ == "__main__":
+  host = '212.182.24.27'
+  port = 2900
+  
+  message = "hello"
+  response = send_receive_message(host, port, random_message)
+
+  if response:
+    print(f"Sent: {random_message}")
+    print(f"Received: {response}")
+
