@@ -1,0 +1,32 @@
+# Zadanie 1
+
+import socket
+import time
+
+def z1(host="time-a-wwv.nist.gov", port=13):
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)
+        sock.connect((host, port))
+        
+        data = sock.recv(1024)
+        data = data.decode('ascii')
+        data = data.split(" ")
+        date = data[1]
+        time= data[2]
+        print(f"Data: {date}, godzina: {time}")
+      
+
+    except socket.timeout:
+        print(f"Connection to {host} timed out.")
+        return None
+    except ConnectionRefusedError:
+        print(f"Connection refused by {host}.")
+        return None    
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+    finally:
+        sock.close()
+
+z1()
