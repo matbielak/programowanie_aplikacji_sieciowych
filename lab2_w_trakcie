@@ -99,3 +99,23 @@ if __name__ == "__main__":
     print(f"Sent: {random_message}")
     print(f"Received: {response}")
 
+# Zadanie 4
+
+import socket
+
+def udp_client(host, port, message):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.sendto(message.encode(), (host, port))
+    data, addr = sock.recvfrom(1024)  
+    sock.close()
+    return data.decode()
+
+HOST = "212.182.24.27"
+PORT = 2901
+MESSAGE = "Hello"
+
+try:
+    received_message = udp_client(HOST, PORT, MESSAGE)
+    print("Received:", received_message)
+except Exception as e:
+    print(f"Error: {e}")
