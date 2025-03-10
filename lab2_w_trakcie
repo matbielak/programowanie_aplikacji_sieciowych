@@ -157,3 +157,29 @@ if __name__ == "__main__":
     print(f"Sent: {random_message}")
     print(f"Received: {response}")
 
+# Zadanie 6
+
+import socket
+
+def udp_client(host, port, m1,m2,m3):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.sendto(m1.encode(), (host, port))
+    sock.sendto(m2.encode(), (host, port))
+    sock.sendto(m3.encode(), (host, port))
+    data, addr = sock.recvfrom(1024)  
+    sock.close()
+    return data.decode()
+
+HOST = "212.182.24.27"
+PORT = 2902
+m1=input("Enter a number: ")
+m2=input("Enter an operator (+,-,*,/,^,%): ")
+m3=input("Enter a number: ")
+
+try:
+    received_message = udp_client(HOST, PORT, MESSAGE)
+    print("Received:", received_message)
+except Exception as e:
+    print(f"Error: {e}")
+
+
