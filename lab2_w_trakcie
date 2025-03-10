@@ -182,4 +182,25 @@ try:
 except Exception as e:
     print(f"Error: {e}")
 
+# Zadanie 9
+
+import socket
+
+def udp_client(host, port, m1):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.sendto(m1.encode(), (host, port))
+    data, addr = sock.recvfrom(1024)  
+    sock.close()
+    return data.decode()
+
+HOST = "212.182.24.27"
+PORT = 2906
+m1=input("Enter ip: ")
+
+try:
+    received_message = udp_client(HOST, PORT, MESSAGE)
+    print("HOSTNAME:", received_message)
+except Exception as e:
+    print(f"Error: {e}")
+
 
