@@ -706,3 +706,76 @@ try:
 finally:
     sock.close()
 
+### Zadanie 14
+# Klient:
+import socket
+udp_datagram = "ed740b550024effd70726f6772616d6d696e6720696e20707974686f6e2069732066756e"
+source_port = int(udp_datagram[0:4],base=16)
+destination_port = int(udp_datagram[4:8],base=16)
+data = bytes.fromhex(udp_datagram[16:]).decode('utf-8')
+message = f"zad14odp;src;{source_port};dst;{destination_port};data;{data}"
+add = '127.0.0.1' # 212.182.24.27
+try:
+    client_socket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+    client_socket.sendto(message.encode(),(add,2910))
+    response, server = client_socket.recvfrom(1024)
+    print(f"Otrzymano wiadomosc od serwera: {response.decode('utf-8')}")
+except Exception as e:
+    print(e)
+finally:
+    client_socket.close()
+
+
+# Serwer:
+import socket, select, sys
+from time import gmtime, strftime
+
+
+def check_msg_syntax(txt):
+    s = len(txt.split(";"))
+    if s != 7:
+        return "BAD_SYNTAX"
+    else:
+        tmp = txt.split(";")
+        if tmp[0] == "zad14odp" and tmp[1] == "src" and tmp[3] == "dst" and tmp[5] == "data":
+            try :
+                src_port = int(tmp[2])
+                dst_port = int(tmp[4])
+                data = tmp[6]
+            except :
+                return "BAD_SYNTAX"
+            if src_port == 60788 and dst_port == 2901 and data == "programming in python is fun":
+                return "TAK"
+            else:
+                return "NIE"
+        else:
+            return "BAD_SYNTAX"
+
+
+HOST = '127.0.0.1'
+PORT = 2910
+
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+try:
+    sock.bind((HOST, PORT))
+except socket.error as msg:
+    print('Bind failed. Error Code : ' + str(msg[0]) + ' Message ' + msg[1])
+    sys.exit()
+
+print("[%s] UDP ECHO Server is waiting for incoming connections ... " % strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+
+
+try:
+    while True:
+
+        data, address = sock.recvfrom(1024)
+        print('[%s] Received %s bytes from client %s. Data: %s' % (strftime("%Y-%m-%d %H:%M:%S", gmtime()), len(data), address, data))
+
+        if data:
+
+            answer = check_msg_syntax(data.decode('utf-8'))
+            sent = sock.sendto(answer.encode('utf-8'), address)
+            print('[%s] Sent %s bytes bytes back to client %s.' % (strftime("%Y-%m-%d %H:%M:%S", gmtime()), sent, address))
+finally:
+    sock.close()
