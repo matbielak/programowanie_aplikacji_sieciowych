@@ -572,3 +572,60 @@ while True:
 
     finally:
         connection.close()
+
+
+### Zadanie 12
+# Serwer ten sam co do zadania 11
+# Klient:
+
+import socket
+
+def prepare_message(message, length=20):
+    if len(message) < length:
+        return message.ljust(length) 
+    elif len(message) > length:
+        return message[:length]
+    return message
+
+def send_all(sock, data):
+    total_sent = 0
+    while total_sent < len(data):
+        sent = sock.send(data[total_sent:])
+        if sent == 0:
+            raise RuntimeError("Socket connection broken")
+        total_sent += sent
+
+def recv_all(sock, length):
+    data = b''
+    while len(data) < length:
+        chunk = sock.recv(length - len(data))
+        if chunk == b'':
+            raise RuntimeError("Socket connection broken")
+        data += chunk
+    return data
+
+def main():
+
+    server_address = ("127.0.0.1", 2908)
+
+    msg = input("Podaj wiadomość do wysłania (max 20 znaków): ")
+    prepared_msg = prepare_message(msg)
+
+    try:
+       
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
+            print(f"Łączenie z serwerem {server_address}...")
+            client_socket.connect(server_address)
+            
+            print(f"Wysyłanie wiadomości: '{prepared_msg}'")
+            send_all(client_socket, prepared_msg.encode('utf-8'))
+
+
+            response = recv_all(client_socket, 20).decode('utf-8') 
+            print(f"Otrzymano wiadomość od serwera: '{response}'")
+    
+    except Exception as e:
+        print(f"Wystąpił błąd: {e}")
+
+if __name__ == "__main__":
+    main()
