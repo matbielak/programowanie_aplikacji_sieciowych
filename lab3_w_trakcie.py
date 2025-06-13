@@ -470,3 +470,105 @@ try:
                 print ('[%s] Sent %s bytes bytes back to client %s.' % (strftime("%Y-%m-%d %H:%M:%S", gmtime()), sent, address))
 finally:
     sock.close()
+
+
+### Zadanie 11
+# Klient:
+
+import socket
+
+def prepare_message(message, length=20):
+    if len(message) < length:
+        return message.ljust(length)
+    elif len(message) > length:
+        return message[:length]
+    return message
+
+def main():
+
+    server_address = ("127.0.0.1", 2908)
+
+    msg = input("Podaj wiadomość do wysłania (max 20 znaków): ")
+    prepared_msg = prepare_message(msg)
+
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
+            print(f"Łączenie z serwerem {server_address}...")
+            client_socket.connect(server_address)
+            
+            print(f"Wysyłanie wiadomości: '{prepared_msg}'")
+            client_socket.sendall(prepared_msg.encode('utf-8'))
+
+            response = client_socket.recv(1024).decode('utf-8')
+            print(f"Otrzymano wiadomość od serwera: '{response}'")
+    
+    except Exception as e:
+        print(f"Wystąpił błąd: {e}")
+
+if __name__ == "__main__":
+    main()
+
+
+# Serwer:
+
+
+import socket
+import sys
+from time import gmtime, strftime
+
+HOST = '127.0.0.1'
+PORT = 2908
+MAX_PACKET_LENGTH = 20
+
+def recvall(sock, msgLen):
+    msg = ""
+    bytesRcvd = 0
+
+    while bytesRcvd < msgLen:
+
+        chunk = sock.recv(msgLen - bytesRcvd)
+
+        if not chunk:
+            break
+
+        bytesRcvd += len(chunk)
+        msg += str(chunk)
+
+    return msg
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+try:
+    s.bind((HOST, PORT))
+except socket.error as msg:
+    print ('Bind failed. Error Code : ' + str(msg[0]) + ' Message ' + msg[1])
+    sys.exit()
+
+s.listen(1000)
+
+print("[%s] TCP ECHO (fixed-length messages) Server is waiting for incoming connections ... " % strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+
+while True:
+
+    connection, client_address = s.accept()
+
+    try:
+        print("[%s] Client %s connected ... " % (strftime("%Y-%m-%d %H:%M:%S", gmtime()), client_address))
+
+        while True:
+            try :
+                data = recvall(connection, MAX_PACKET_LENGTH)
+                print("[%s] Client %s sent \'%s\' " % (strftime("%Y-%m-%d %H:%M:%S", gmtime()), client_address, data))
+
+                if data:
+
+                        print("[%s] Sending back to client %s ... " % (strftime("%Y-%m-%d %H:%M:%S", gmtime()), data))
+                        connection.sendall(data.encode('utf-8'))
+                else:
+                    print("[%s] Client %s disconnected ... " % (strftime("%Y-%m-%d %H:%M:%S", gmtime()), client_address))
+                    break
+            except socket.error:
+                    print("[%s] Something happened, but I do not want to bother you ... " % (strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+
+    finally:
+        connection.close()
