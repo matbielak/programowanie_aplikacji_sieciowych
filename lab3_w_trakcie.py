@@ -271,3 +271,39 @@ try:
 finally:
 
     sock.close()
+
+### Zadanie 7
+import socket
+
+HOST = input("host: ")  # np. 216.58.215.110
+PORT = int(input("port number: "))  # np. 80
+
+server_address = (HOST, PORT)
+
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+try:
+    sock.connect(server_address)
+    print(f"Successfully connected to {HOST} on port {PORT}")
+
+    sock.settimeout(5)  
+    response = sock.recv(1024).decode('utf-8', errors='replace')  
+    print(f"Server response:\n{response}")
+
+    if "HTTP" in response:
+        print("Detected service: HTTP (Web Server)")
+    elif "SSH" in response:
+        print("Detected service: SSH (Secure Shell)")
+    elif "SMTP" in response:
+        print("Detected service: SMTP (Mail Server)")
+    else:
+        print("Service not recognized. It might be a custom service.")
+
+except ConnectionRefusedError:
+    print(f"Connection to {HOST} on port {PORT} was refused.")
+except socket.timeout:
+    print("Connection timed out. No response received.")
+except OSError as e:
+    print(f"An error occurred: {e}")
+finally:
+    sock.close()
