@@ -779,3 +779,130 @@ try:
             print('[%s] Sent %s bytes bytes back to client %s.' % (strftime("%Y-%m-%d %H:%M:%S", gmtime()), sent, address))
 finally:
     sock.close()
+
+### Zadanie 15
+# Klient:
+import socket
+tcpip="4500004ef7fa400038069d33d4b6181bc0a800020b54b9a6fbf93c57c10a06c1801800e3ce9c00000101080a03a6eb01000bf8e56e6574776f726b2070726f6772616d6d696e672069732066756e"
+
+version = int(tcpip[0],base=16)   
+
+source_ip = str(int(tcpip[24:26],16)) + "." +  str(int(tcpip[26:28],16)) + "." +str(int(tcpip[28:30],16)) + "." + str(int(tcpip[30:32],16))
+destination_ip = str(int(tcpip[32:34],16)) + "." +  str(int(tcpip[34:36],16)) + "." +str(int(tcpip[36:38],16)) + "." + str(int(tcpip[38:40],16))
+
+version2 = int(tcpip[18:20],base=16)   
+
+source_port = str(int(tcpip[40:44],16))
+dest_port = str(int(tcpip[44:48],16))
+mess = bytes.fromhex(tcpip[104:]).decode('utf-8')
+data = f"zad15odpA;ver;{version};srcip;{source_ip};dstip;{destination_ip};type;{version2}".encode('utf-8')
+data2 = f"zad15odpB;srcport;{source_port};dstport;{dest_port};data;{mess}".encode('utf-8')
+add = '127.0.0.1' # 212.182.24.27
+try:
+    client_socket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+    client_socket.sendto(data,(add,2911))
+    response, server = client_socket.recvfrom(1024)
+    print(f"Otrzymano wiadomosc od serwera: {response.decode('utf-8')}")
+    if response.decode('utf-8') == "TAK":
+        client_socket.sendto(data2,(add,2911))
+        response, server = client_socket.recvfrom(1024)
+        print(f"Otrzymano wiadomosc od serwera: {response.decode('utf-8')}")
+
+except Exception as e:
+    print(e)
+finally:
+    client_socket.close()
+
+# Serwer:
+import socket, select, sys
+from time import gmtime, strftime
+
+
+def check_msgA_syntax(txt):
+    s = len(txt.split(";"))
+    if s != 9:
+        return "BAD_SYNTAX"
+    else:
+        tmp = txt.split(";")
+        if tmp[0] == "zad15odpA" and tmp[1] == "ver" and tmp[3] == "srcip" and tmp[5] == "dstip" and tmp[7] == "type":
+            try:
+                ver = int(tmp[2])
+                srcip = tmp[4]
+                dstip = tmp[6]
+                type = int(tmp[8])
+                if ver == 4 and type == 6 and srcip == "212.182.24.27" and dstip == "192.168.0.2":
+                    return "TAK"
+                else:
+                    return "NIE"
+            except:
+                return "NIE"
+        else:
+            return "BAD_SYNTAX"
+
+
+def check_msgB_syntax(txt):
+    s = len(txt.split(";"))
+    if s != 7:
+        return "BAD_SYNTAX"
+    else:
+        tmp = txt.split(";")
+        if tmp[0] == "zad15odpB" and tmp[1] == "srcport" and tmp[3] == "dstport" and tmp[5] == "data":
+
+            try:
+                srcport = int(tmp[2])
+                dstport = int(tmp[4])
+                data = tmp[6]
+
+                if srcport == 2900 and dstport == 47526 and data == "network programming is fun":
+                    return "TAK"
+                else:
+                    return "NIE"
+            except:
+                return "NIE"
+        else:
+            return "BAD_SYNTAX"
+
+
+HOST = '127.0.0.1'
+PORT = 2911
+
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+try:
+    sock.bind((HOST, PORT))
+except socket.error as msg:
+    print('Bind failed. Error Code : ' + str(msg[0]) + ' Message ' + msg[1])
+    sys.exit()
+
+print("[%s] UDP ECHO Server is waiting for incoming connections ... " % strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+
+try:
+    while True:
+
+        data, address = sock.recvfrom(1024)
+        print('[%s] Received %s bytes from client %s. Data: %s' % (
+        strftime("%Y-%m-%d %H:%M:%S", gmtime()), len(data), address, data))
+
+        if data:
+
+            tmp = data.decode('utf-8').split(";")
+            print("DATA: %s" % data)
+
+            if tmp[0] == "zad15odpA":
+                answer = check_msgA_syntax(data.decode('utf-8'))
+                sent = sock.sendto(answer.encode('utf-8'), address)
+                print('[%s] Sent %s bytes bytes back to client %s.' % (
+                strftime("%Y-%m-%d %H:%M:%S", gmtime()), sent, address))
+
+            elif tmp[0] == "zad15odpB":
+                answer = check_msgB_syntax(data.decode('utf-8'))
+                sent = sock.sendto(answer.encode('utf-8'), address)
+                print('[%s] Sent %s bytes bytes back to client %s.' % (
+                strftime("%Y-%m-%d %H:%M:%S", gmtime()), sent, address))
+
+            else:
+                sent = sock.sendto("BAD_SYNTAX", address)
+                print('[%s] Sent %s bytes bytes back to client %s.' % (
+                strftime("%Y-%m-%d %H:%M:%S", gmtime()), sent, address))
+finally:
+    sock.close()
