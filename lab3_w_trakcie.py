@@ -406,3 +406,67 @@ try:
                 print ('[%s] Sent %s bytes bytes back to client %s.' % (strftime("%Y-%m-%d %H:%M:%S", gmtime()), sent, address))
 finally:
     sock.close()
+
+### Zadanie 10
+# Klient:
+import socket
+
+def main():
+    server_address = ('127.0.0.1', 2907)
+
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client_socket:
+        try:
+
+            hostname = input("Podaj nazwę hosta: ")
+
+            print(f"Wysyłanie nazwy hosta {hostname} do serwera {server_address}")
+            client_socket.sendto(hostname.encode(), server_address)
+
+            response, _ = client_socket.recvfrom(1024)
+            print(f"Otrzymany adres IP dla hosta {hostname}: {response.decode()}")
+        
+        except Exception as e:
+            print(f"Wystąpił błąd: {e}")
+
+if __name__ == "__main__":
+    main()
+
+# Serwer:
+# !/usr/bin/env python
+
+import socket, select, sys
+from time import gmtime, strftime
+
+HOST = '127.0.0.1'
+PORT = 2907
+
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+try:
+    sock.bind((HOST, PORT))
+except socket.error as msg:
+    print ('Bind failed. Error Code : ' + str(msg[0]) + ' Message ' + msg[1])
+    sys.exit()
+
+print ("[%s] UDP ECHO Server is waiting for incoming connections on port %s ... " % (strftime("%Y-%m-%d %H:%M:%S", gmtime()), PORT))
+
+try:
+    while True:
+
+        data, address = sock.recvfrom(4096)
+        print ('[%s] Received %s bytes from client %s. Data: %s' % (strftime("%Y-%m-%d %H:%M:%S", gmtime()), len(data), address, data))
+
+        if data:
+
+            try:
+
+                hostname = socket.gethostbyname(str(data.decode('utf-8')))
+                #sent = sock.sendto(str(hostname), address)
+                sent = sock.sendto(hostname.encode('utf-8'), address)
+                print ('[%s] Sent %s bytes bytes back to client %s.' % (strftime("%Y-%m-%d %H:%M:%S", gmtime()), sent, address))
+
+            except socket.gaierror:
+                sent = sock.sendto("Sorry, an error occurred in gethostbyaddr".encode('utf-8'), address)
+                print ('[%s] Sent %s bytes bytes back to client %s.' % (strftime("%Y-%m-%d %H:%M:%S", gmtime()), sent, address))
+finally:
+    sock.close()
